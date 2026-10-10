@@ -20,6 +20,8 @@ import Admin from './pages/Admin';
 import SubmitEvent from './pages/SubmitEvent';
 import Guidelines from './pages/Guidelines';
 import NotFound from './pages/NotFound';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // Scroll to the top when you open a new page.
 function ScrollToTop() {
@@ -104,6 +106,8 @@ function App() {
               <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
               <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
               <Route path="/auth" element={<AuthRoute />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

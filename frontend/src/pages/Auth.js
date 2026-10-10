@@ -1,5 +1,5 @@
 import { useContext, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AuthContext } from '../AuthContext';
 import api, { getErrorMessage } from '../lib/api';
@@ -52,6 +52,11 @@ export default function Auth() {
               hint={isLogin ? undefined : 'At least 8 characters.'}
               required
             />
+            {isLogin && (
+              <div className="-mt-4 text-right">
+                <Link to="/forgot-password" data-testid="forgot-password-link" className="text-sm text-brand-muted hover:text-brand-ink underline underline-offset-4">Forgot password?</Link>
+              </div>
+            )}
             <button type="submit" data-testid="submit-button" disabled={loading} className="btn-primary w-full">
               {loading ? 'Please wait…' : isLogin ? 'Sign in' : 'Create account'}
             </button>

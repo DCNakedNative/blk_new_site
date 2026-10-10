@@ -9,6 +9,7 @@ import re
 import time
 import uuid
 import secrets
+import hashlib
 import logging
 from collections import defaultdict, deque
 from pathlib import Path
@@ -91,6 +92,7 @@ class RateLimiter:
 
 login_limiter = RateLimiter(5, 15 * 60, "Too many failed sign-in attempts. Please wait 15 minutes and try again.")
 register_limiter = RateLimiter(20, 60 * 60, "Too many sign-ups from this connection. Please try again later.")
+reset_limiter = RateLimiter(5, 60 * 60, "Too many reset requests. Please try again later.")
 submission_limiter = RateLimiter(5, 60 * 60, "Too many submissions from this connection. Please try again later.")
 
 
@@ -205,6 +207,15 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(min_length=10, max_length=200)
+    password: str = Field(min_length=8, max_length=72)
 
 
 class User(BaseModel):
@@ -473,6 +484,41 @@ async def get_me(user_id: str = Depends(get_current_user)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return User(**user)
+
+
+def _hash_reset_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+@api_router.post("/auth/forgot-password")
+async def forgot_password(payload: ForgotPasswordRequest, request: Request):
+    ip = client_ip(request)
+    reset_limiter.check(ip)
+    reset_limiter.hit(ip)
+    user = await db.users.find_one({"email": payload.email}, {"_id": 0, "id": 1})
+    if user:
+        token = secrets.token_urlsafe(32)
+        await db.password_reset_tokens.delete_many({"user_id": user["id"], "used": False})
+        await db.password_reset_tokens.insert_one({
+            "token_hash": _hash_reset_token(token),
+            "user_id": user["id"],
+            "used": False,
+            "expires_at": datetime.now(timezone.utc) + timedelta(hours=1),
+        })
+        link = f"{os.environ['FRONTEND_URL'].rstrip('/')}/reset-password?token={token}"
+        logger.info("PASSWORD RESET LINK for %s: %s", payload.email, link)
+    return {"message": "If that email has an account, a reset link has been sent."}
+
+
+@api_router.post("/auth/reset-password")
+async def reset_password(payload: ResetPasswordRequest):
+    record = await db.password_reset_tokens.find_one({"token_hash": _hash_reset_token(payload.token)})
+    expires_at = record and record["expires_at"].replace(tzinfo=timezone.utc)
+    if not record or record.get("used") or expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="This reset link is invalid or has expired. Please request a new one.")
+    await db.users.update_one({"id": record["user_id"]}, {"$set": {"password": get_password_hash(payload.password)}})
+    await db.password_reset_tokens.update_one({"_id": record["_id"]}, {"$set": {"used": True}})
+    return {"message": "Password updated. You can now sign in."}
 
 
 # ---------------------------------------------------------------------------
@@ -890,12 +936,38 @@ async def ensure_indexes():
         (db.rsvps, [("event_id", 1), ("user_id", 1)], {"unique": True}),
         (db.blog_posts, [("slug", 1)], {}),
         (db.events, [("date", 1)], {}),
+        (db.password_reset_tokens, [("expires_at", 1)], {"expireAfterSeconds": 0}),
+        (db.password_reset_tokens, [("token_hash", 1)], {}),
     ]
     for collection, keys, kwargs in specs:
         try:
             await collection.create_index(keys, **kwargs)
         except Exception as exc:  # e.g. old duplicate rows already exist
             logger.warning("Could not create index %s on %s: %s", keys, collection.name, exc)
+
+
+@app.on_event("startup")
+async def seed_admin():
+    email = os.environ.get("ADMIN_EMAIL")
+    password = os.environ.get("ADMIN_PASSWORD")
+    if not email or not password:
+        return
+    existing = await db.users.find_one({"email": email}, {"_id": 0, "password": 1})
+    if existing is None:
+        await db.users.insert_one({
+            "id": str(uuid.uuid4()),
+            "email": email,
+            "name": "Admin",
+            "password": get_password_hash(password),
+            "is_admin": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+        logger.info("Created admin account %s", email)
+        return
+    update = {"is_admin": True}
+    if not verify_password(password, existing["password"]):
+        update["password"] = get_password_hash(password)
+    await db.users.update_one({"email": email}, {"$set": update})
 
 
 @app.on_event("shutdown")
