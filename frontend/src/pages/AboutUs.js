@@ -17,9 +17,10 @@ export default function AboutUs() {
           <div className="lg:col-span-2">
             <div className="border border-black/10 overflow-hidden bg-white/50 lg:sticky lg:top-28">
               <img
-                src="https://customer-assets.emergentagent.com/job_51882dd3-272f-4b13-8e0c-10a6d58d34a8/artifacts/w0qffah5_Eddie%20and%20Storm1.jpg"
+                src="/images/about-founders.jpg"
                 alt="Eddie and Adrian, The Shenanigators"
-                className="w-full h-auto object-cover"
+                data-testid="about-founders-photo"
+                className="w-full h-auto object-cover object-top"
                 style={{ maxHeight: '600px' }}
               />
               <div className="p-8 bg-brand-green text-brand-cream">
