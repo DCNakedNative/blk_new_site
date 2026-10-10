@@ -1,0 +1,25 @@
+{
+  "summary": "Frontend-only testing of 'Add to Calendar' + 'Coming up this week' features on The Shenanigators app. All acceptance criteria pass: Dashboard shows coming-up-this-week section with only events in next 7 days (Beach Day in 3 days present, Later Picnic in 20 days correctly excluded); Google Calendar links use calendar.google.com/calendar/render?action=TEMPLATE with correct dates format (YYYYMMDDTHHMMSS/... for timed with 2h default, YYYYMMDD/YYYYMMDD+1 for all-day) and include full location with exact address; Apple/Outlook button successfully downloads a valid .ics (RFC5545 structure, DTSTART/DTEND/SUMMARY/LOCATION/UID present, line folding, escapes); Event detail page shows rsvp-confirmed panel with add-to-calendar-google/apple when logged in; logged-out guests see guest-add-to-calendar-google/apple. Regression: account-settings (change password/delete account), RSVP cards, cancel RSVP controls all remain functional.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "lib/dates.js:93 TZ_SUFFIX branch: UTC path used only when start value already has tz suffix. Current server-provided '2026-10-13T18:00' uses floating time path, which matches 'in-person event' intent. Acceptable.",
+    "UpcomingThisWeek key uses r.id (RSVP id). This is fine; keys are stable.",
+    "googleCalendarUrl re-uses icsTimes() which prefixes 'DTSTART;VALUE=DATE:' etc; the .split(':').pop() correctly extracts the value for Google. Clean implementation.",
+    "AddToCalendar emits <a> for Google (opens new tab) and <button> for Apple (triggers download) — correct semantics."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "test_credentials": "member@shenanigators.com / MemberPass123 used (per request). Admin not needed.",
+  "seed_data_creation": "Used pre-seeded CALTEST Beach Day (3 days, 18:00) and CALTEST Later Picnic (20 days, all-day) RSVPs.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Add-to-calendar feature verified via Playwright on URL https://blk-new-site.preview.emergentagent.com (frontend/.env). Google URL dates param is URL-encoded (so / is %2F in href). Testing with unquoted href recommended. Member account has 2 RSVPs: Beach Day (timed, in 3 days) and Later Picnic (all-day, in 20 days) - do not cancel these as they are the fixture data.",
+  "rca of the issue": "No issues found."
+}
