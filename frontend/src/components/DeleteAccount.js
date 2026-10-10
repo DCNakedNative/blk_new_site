@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AuthContext } from '../AuthContext';
@@ -10,6 +10,12 @@ export default function DeleteAccount() {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const signOutOnLeave = useRef(false);
+
+  // Sign out once we've left the dashboard, so the sign-in guard doesn't redirect to /auth.
+  useEffect(() => () => {
+    if (signOutOnLeave.current) logout();
+  }, [logout]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,8 +24,8 @@ export default function DeleteAccount() {
     try {
       await api.post('/auth/delete-account', { password });
       toast.success('Your account was deleted.');
-      logout();
-      navigate('/');
+      signOutOnLeave.current = true;
+      navigate('/', { replace: true });
     } catch (error) {
       toast.error(getErrorMessage(error));
       setLoading(false);
