@@ -218,6 +218,15 @@ class ResetPasswordRequest(BaseModel):
     password: str = Field(min_length=8, max_length=72)
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=72)
+    new_password: str = Field(min_length=8, max_length=72)
+
+
+class DeleteAccountRequest(BaseModel):
+    password: str = Field(min_length=1, max_length=72)
+
+
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str
@@ -519,6 +528,40 @@ async def reset_password(payload: ResetPasswordRequest):
     await db.users.update_one({"id": record["user_id"]}, {"$set": {"password": get_password_hash(payload.password)}})
     await db.password_reset_tokens.update_one({"_id": record["_id"]}, {"$set": {"used": True}})
     return {"message": "Password updated. You can now sign in."}
+
+
+async def _verify_own_password(user_id: str, password: str) -> dict:
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not verify_password(password, user["password"]):
+        raise HTTPException(status_code=400, detail="Your current password is incorrect")
+    return user
+
+
+@api_router.post("/auth/change-password")
+async def change_password(payload: ChangePasswordRequest, user_id: str = Depends(get_current_user)):
+    await _verify_own_password(user_id, payload.current_password)
+    await db.users.update_one({"id": user_id}, {"$set": {"password": get_password_hash(payload.new_password)}})
+    await db.password_reset_tokens.delete_many({"user_id": user_id})
+    return {"message": "Password updated"}
+
+
+@api_router.post("/auth/delete-account")
+async def delete_account(payload: DeleteAccountRequest, user_id: str = Depends(get_current_user)):
+    user = await _verify_own_password(user_id, payload.password)
+    if user.get("is_admin") and await db.users.count_documents({"is_admin": True}) <= 1:
+        raise HTTPException(status_code=400, detail="You're the only admin. Make someone else an admin before deleting your account.")
+    async for rsvp in db.rsvps.find({"user_id": user_id}, {"_id": 0, "event_id": 1}):
+        await db.events.update_one(
+            {"id": rsvp["event_id"], "attendees_count": {"$gt": 0}},
+            {"$inc": {"attendees_count": -1}},
+        )
+    await db.rsvps.delete_many({"user_id": user_id})
+    await db.booking_inquiries.delete_many({"user_id": user_id})
+    await db.password_reset_tokens.delete_many({"user_id": user_id})
+    await db.users.delete_one({"id": user_id})
+    return {"message": "Account deleted"}
 
 
 # ---------------------------------------------------------------------------

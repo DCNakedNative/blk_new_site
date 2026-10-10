@@ -7,6 +7,8 @@ import api, { getErrorMessage } from '../lib/api';
 import useFetch from '../hooks/useFetch';
 import PageMeta from '../components/PageMeta';
 import { ErrorBox, PageLoading } from '../components/StateViews';
+import ChangePassword from '../components/ChangePassword';
+import DeleteAccount from '../components/DeleteAccount';
 import { formatDay, formatRange, formatWhen } from '../lib/dates';
 
 export default function Dashboard() {
@@ -103,6 +105,14 @@ export default function Dashboard() {
             )}
           </section>
         </div>
+
+        <section aria-labelledby="settings-heading" className="mt-24" data-testid="account-settings">
+          <h2 id="settings-heading" className="text-3xl font-bold tracking-tight mb-8">Account settings</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            <ChangePassword />
+            <DeleteAccount />
+          </div>
+        </section>
       </div>
     </div>
   );

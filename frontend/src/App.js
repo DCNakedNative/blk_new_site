@@ -100,6 +100,8 @@ function App() {
               <Route path="/blog/:id" element={<BlogDetail />} />
               <Route path="/travel" element={<Travel />} />
               <Route path="/travel/:id" element={<TravelDetail />} />
+              <Route path="/trips" element={<Travel />} />
+              <Route path="/trips/:id" element={<TravelDetail />} />
               <Route path="/about" element={<AboutUs />} />
               <Route path="/submit-event" element={<SubmitEvent />} />
               <Route path="/guidelines" element={<Guidelines />} />

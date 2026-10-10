@@ -51,7 +51,7 @@ export default function Guidelines() {
           <p>Events show a general location to everyone. The exact address is shown only to people who have RSVP'd.</p>
           <p>The site uses an analytics service (PostHog) to count visits and see which pages are used.</p>
           <p>
-            To see, correct, or delete your information, email <a className="underline text-brand-green" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and we'll take care of it.
+            You can delete your account yourself from <a className="underline text-brand-green" href="/dashboard">My account</a>. To see or correct your information, email <a className="underline text-brand-green" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and we'll take care of it.
           </p>
         </div>
       </div>
