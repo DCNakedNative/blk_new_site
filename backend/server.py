@@ -957,7 +957,7 @@ async def seed_admin():
         await db.users.insert_one({
             "id": str(uuid.uuid4()),
             "email": email,
-            "name": "Admin",
+            "name": "Site Admin",
             "password": get_password_hash(password),
             "is_admin": True,
             "created_at": datetime.now(timezone.utc).isoformat(),
