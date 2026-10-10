@@ -10,6 +10,7 @@ React (CRA + craco, Tailwind) frontend; FastAPI + MongoDB backend (server.py). P
 - Add to Calendar (Google link + Apple/Outlook .ics) on RSVP cards, week list, event detail
 - Dashboard "Coming up this week" list of RSVP'd events (next 7 days)
 - About Us photo replaced with user upload, self-hosted at frontend/public/images/about-founders.jpg
+- Admin > Admins tab: list/search members, make/remove admin (no self-demotion)
 - Dashboard Account settings: change password (needs current pw), delete account (needs pw; removes RSVPs, inquiries; last admin blocked)
 - Added missing scaffold: frontend index.js, craco/postcss/jsconfig, .env files, backend make_admin.py
 - Admin seeded: admin@shenanigators.com; tests 100% backend + frontend
