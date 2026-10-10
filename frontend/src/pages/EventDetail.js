@@ -1,15 +1,16 @@
 import { useContext, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { ArrowLeft, CalendarPlus, Check, Clock, Lock, MapPin, Users } from 'lucide-react';
+import { ArrowLeft, Check, Clock, Lock, MapPin, Users } from 'lucide-react';
 import { startOfToday } from 'date-fns';
 import { toast } from 'sonner';
 import { AuthContext } from '../AuthContext';
 import api, { getErrorMessage } from '../lib/api';
 import useFetch from '../hooks/useFetch';
+import AddToCalendar from '../components/AddToCalendar';
 import PageMeta from '../components/PageMeta';
 import Field from '../components/Field';
 import { ErrorBox, PageLoading } from '../components/StateViews';
-import { downloadIcs, formatDay, formatTime, formatWhen, hasTime, toDate } from '../lib/dates';
+import { formatDay, formatTime, formatWhen, hasTime, toDate } from '../lib/dates';
 
 // "Saturday, October 10, 2026 at 6:00 PM", plus the end when there is one.
 function describeWhen(event) {
@@ -83,8 +84,7 @@ export default function EventDetail() {
     }
   };
 
-  const addToCalendar = () =>
-    downloadIcs({
+  const calendarEvent = {
       id: e.id,
       title: e.title,
       description: e.description,
@@ -92,7 +92,7 @@ export default function EventDetail() {
       end: e.end_date,
       location: e.location_details ? `${e.location_details}, ${e.location}` : e.location,
       url: window.location.href,
-    });
+  };
 
   let rsvpPanel;
   if (isPast) {
@@ -103,9 +103,7 @@ export default function EventDetail() {
         <p className="flex items-center gap-3 text-xl font-medium text-brand-green">
           <Check size={22} aria-hidden="true" /> You're going
         </p>
-        <button type="button" onClick={addToCalendar} className="btn-primary w-full" data-testid="add-to-calendar">
-          <CalendarPlus size={18} aria-hidden="true" /> Add to calendar
-        </button>
+        <AddToCalendar event={calendarEvent} />
         <button type="button" onClick={handleCancel} disabled={busy} className="btn-outline w-full" data-testid="cancel-rsvp">
           Cancel my RSVP
         </button>
@@ -122,9 +120,7 @@ export default function EventDetail() {
         <Link to="/auth" state={{ from: location.pathname }} className="btn-accent w-full" data-testid="login-to-rsvp">
           Sign in to RSVP
         </Link>
-        <button type="button" onClick={addToCalendar} className="btn-outline w-full">
-          <CalendarPlus size={18} aria-hidden="true" /> Add to calendar
-        </button>
+        <AddToCalendar event={calendarEvent} testIdPrefix="guest-add-to-calendar" />
       </div>
     );
   } else {

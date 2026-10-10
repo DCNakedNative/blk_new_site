@@ -9,6 +9,8 @@ import PageMeta from '../components/PageMeta';
 import { ErrorBox, PageLoading } from '../components/StateViews';
 import ChangePassword from '../components/ChangePassword';
 import DeleteAccount from '../components/DeleteAccount';
+import AddToCalendar from '../components/AddToCalendar';
+import UpcomingThisWeek, { rsvpToCalendarEvent } from '../components/UpcomingThisWeek';
 import { formatDay, formatRange, formatWhen } from '../lib/dates';
 
 export default function Dashboard() {
@@ -38,6 +40,8 @@ export default function Dashboard() {
           <p className="text-xl text-brand-muted leading-relaxed">Your RSVPs and trip inquiries in one place.</p>
         </div>
 
+        {!rsvps.error && <UpcomingThisWeek rsvps={rsvps.data || []} />}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <section aria-labelledby="rsvp-heading">
             <div className="flex items-center justify-between mb-8">
@@ -65,6 +69,9 @@ export default function Dashboard() {
                     {r.event_date && <p className="text-sm text-brand-muted mb-1">{formatWhen(r.event_date, 'EEE, MMM d, yyyy')}</p>}
                     {r.event_location && <p className="flex items-center gap-2 text-sm text-brand-muted mb-1"><MapPin size={14} aria-hidden="true" />{r.event_location}</p>}
                     {r.event_location_details && <p className="text-sm text-brand-ink whitespace-pre-line mt-3 p-3 bg-white/60 border border-black/5">{r.event_location_details}</p>}
+                    {r.event_title && r.event_date && (
+                      <div className="mt-4"><AddToCalendar event={rsvpToCalendarEvent(r)} compact testIdPrefix={`rsvp-calendar-${r.id}`} /></div>
+                    )}
                     <div className="flex items-center justify-between mt-5">
                       <span className="text-xs uppercase tracking-widest text-brand-muted">Registered {formatDay(r.created_at, 'MMM d, yyyy')}</span>
                       <button type="button" onClick={() => cancel(r)} className="text-sm text-brand-orange underline underline-offset-4 hover:text-brand-ink">Cancel RSVP</button>

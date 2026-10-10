@@ -133,3 +133,12 @@ export function downloadIcs(item) {
   const safeName = (item.title || 'event').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   downloadFile(`${safeName || 'event'}.ics`, buildIcs(item), 'text/calendar;charset=utf-8');
 }
+
+// Same start/end values as the .ics file, in the format Google Calendar's link expects.
+export function googleCalendarUrl({ title, description, start, end, location }) {
+  const [s, e] = icsTimes(start, end).map((line) => line.split(':').pop());
+  const params = new URLSearchParams({ action: 'TEMPLATE', text: title || '', dates: `${s}/${e}` });
+  if (description) params.set('details', description);
+  if (location) params.set('location', location);
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
