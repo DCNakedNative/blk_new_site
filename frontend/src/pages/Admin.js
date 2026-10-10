@@ -7,6 +7,7 @@ import api, { getErrorMessage } from '../lib/api';
 import useFetch from '../hooks/useFetch';
 import PageMeta from '../components/PageMeta';
 import Field from '../components/Field';
+import ManageAdmins from '../components/ManageAdmins';
 import { EmptyBox, ErrorBox, PageLoading } from '../components/StateViews';
 import { downloadFile, formatDay, formatRange, formatWhen, toDateInput, toDateTimeInput } from '../lib/dates';
 
@@ -425,6 +426,7 @@ const TABS = [
   { id: 'rsvps', label: 'Attendees' },
   { id: 'inquiries', label: 'Trip inquiries' },
   { id: 'submissions', label: 'Submissions' },
+  { id: 'admins', label: 'Admins' },
 ];
 
 // All hooks are called before any early return, so React's rules of hooks hold even if
@@ -487,6 +489,7 @@ export default function Admin() {
           {tab === 'rsvps' && <RsvpTab />}
           {tab === 'inquiries' && <InquiryTab />}
           {tab === 'submissions' && <SubmissionsTab onCreateEvent={createFromSubmission} />}
+          {tab === 'admins' && <ManageAdmins />}
         </div>
       </div>
     </div>

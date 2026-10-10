@@ -227,6 +227,10 @@ class DeleteAccountRequest(BaseModel):
     password: str = Field(min_length=1, max_length=72)
 
 
+class AdminToggle(BaseModel):
+    is_admin: bool
+
+
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str
@@ -562,6 +566,25 @@ async def delete_account(payload: DeleteAccountRequest, user_id: str = Depends(g
     await db.password_reset_tokens.delete_many({"user_id": user_id})
     await db.users.delete_one({"id": user_id})
     return {"message": "Account deleted"}
+
+
+@api_router.get("/admin/users")
+async def admin_list_users(user_id: str = Depends(get_current_admin_user)):
+    users = await db.users.find(
+        {}, {"_id": 0, "id": 1, "name": 1, "email": 1, "is_admin": 1, "created_at": 1}
+    ).sort([("is_admin", -1), ("name", 1)]).to_list(5000)
+    return [{**u, "is_admin": bool(u.get("is_admin")), "is_you": u["id"] == user_id} for u in users]
+
+
+@api_router.patch("/admin/users/{target_id}")
+async def admin_set_user_role(target_id: str, payload: AdminToggle, user_id: str = Depends(get_current_admin_user)):
+    if target_id == user_id and not payload.is_admin:
+        raise HTTPException(status_code=400, detail="You can't remove your own admin access. Ask another admin to do it.")
+    result = await db.users.update_one({"id": target_id}, {"$set": {"is_admin": payload.is_admin}})
+    if not result.matched_count:
+        raise HTTPException(status_code=404, detail="User not found")
+    logger.info("Admin %s set is_admin=%s for user %s", user_id, payload.is_admin, target_id)
+    return {"message": "Updated"}
 
 
 # ---------------------------------------------------------------------------
